@@ -1,0 +1,298 @@
+/*int t;
+char *a;
+char lcd[] = "000 Degree";
+unsigned char temp[31];
+char *temp1 = "0000";
+unsigned int adc=0;
+unsigned int adc1=0;
+char *temperature="0000" ;
+unsigned char admin_no[14];
+unsigned char config[]="this number is configured."; unsigned
+char alert[]="Alert!! COMBUSTIBLE GAS detected"; char
+ENTR=0X1A;
+int j=0;
+char i; unsigned char msg[]="AT+CMGS=\"";
+char ok[]="OK";
+int row=1,col=1;
+int index = 0;
+int rev=0,b;
+int SET=0; */
+//sbit buz at RB0_bit;
+int set=0;
+sbit buzz at RB0_bit;
+sbit PIR at RD0_bit;
+//char *temp1 = "0000";
+//unsigned int adc=0;
+void sendsms(char *a);
+unsigned char config[]="this number is configured.";
+unsigned char alert[]="Alert!! ANIMALS
+DETECTED"; unsigned char msg[]="AT+CMGS=\"";
+char a;
+//char d=0;
+unsigned char admin_no[15];
+int k,j=0;
+char ok[]="OK";
+int b;
+char i;
+int rev=0;
+int index = 0;
+unsigned char temp[35];
+sbit LCD_RS at RB2_bit;
+sbit LCD_EN at RB3_bit;
+sbit LCD_D4 at RB4_bit;
+34sbit LCD_D5 at RB5_bit;
+sbit LCD_D6 at RB6_bit;
+sbit LCD_D7 at RB7_bit;
+sbit LCD_RS_Direction at TRISB2_bit;
+sbit LCD_EN_Direction at TRISB3_bit;
+sbit LCD_D4_Direction at TRISB4_bit;
+sbit LCD_D5_Direction at TRISB5_bit;
+sbit LCD_D6_Direction at TRISB6_bit;
+sbit LCD_D7_Direction at TRISB7_bit;
+void wait_cal();
+void Lcd_COut(char row, char col, const char *cptr)
+{
+char chr = 0;
+Lcd_Out(row, col, &chr);
+for ( ; chr = *cptr ; ++cptr ) Lcd_Chr_CP(chr);
+}
+void UART1_Write_CText(const char *cptr)
+{
+char chr;
+for ( ; chr = *cptr ; ++cptr ) UART1_Write(chr);
+}
+void init_gsm()
+{ Lcd_Cmd(_LCD_CLEAR);
+Lcd_Cmd(_LCD_CLEAR);
+Lcd_COut(1,1,"Initiallizing..");
+Delay_ms(15000);
+a1:UART1_Write_CText("ATE0\r\n");
+Delay_ms(500);
+UART1_Write_CText("AT\r\n");
+Delay_ms(500);
+UART1_Write_CText("AT+CMGF=1\r\n");
+while(1)
+{
+b++;
+if(b>8000 && UART1_Data_Ready()==0)
+{
+Lcd_Cmd(_LCD_CLEAR); b=0;
+Lcd_COut(2,1,"Check Connection");
+Delay_ms(1000);
+goto a1;
+}
+while(UART1_Data_Ready()==1)
+{
+35i = UART1_Read();
+if(index == 2)
+{
+rev = 1;
+temp[index] = 0;
+index = 0;
+}
+if(('\r'!=i) && ('\n'!=i) )
+{
+temp[index]=i;
+index++;
+}
+}
+if(rev==1)
+{
+rev = 0;
+if(!(strcmp(temp,ok)))
+{Lcd_Cmd(_LCD_CLEAR);
+Lcd_COut(2,1,"GSM Connected");
+Delay_ms(1000);
+break;
+}
+else
+{Lcd_Cmd(_LCD_CLEAR); Lcd_Out(1,1,temp);
+Lcd_COut(2,1,"Connection failed");
+Delay_ms(1000);
+goto a1;
+}
+}
+}
+}
+void main()
+{
+// ADCON1 = 0x80;
+//TRISE = 0xff;
+TRISB.F0 = 0;
+buzz=0;
+//delay_ms(2000);
+TRISD.F0 = 1;
+PIR=0;
+UART1_Init(9600);
+Lcd_Init(); // Initialize LCD
+Lcd_Cmd(_LCD_CLEAR); // Clear display
+Lcd_Cmd(_LCD_CURSOR_OFF); // Cursor off
+36Delay_ms(1000);
+init_gsm();
+Lcd_Cmd(_LCD_CLEAR);
+Lcd_Cmd(_LCD_CLEAR);
+Lcd_COut(1,1,"WAITING FOR CALL ");
+wait_cal();
+sendsms(config);
+Lcd_COut(1,1," SMART CROP ");
+Lcd_COut(2,1," PROTECTION ");
+Delay_ms(2000);
+while(1)
+{
+Lcd_Cmd(_LCD_CLEAR);
+//adc = ADC_Read(6);
+//temp1[0] = adc/1000 +48 ; // Add 48 to get the ASCII character value
+//temp1[1] = (adc/100)%10 +48;
+//temp1[2] = (adc/10)%10 +48;
+//temp1[3] = adc%10 +48;
+if(PIR==1)
+{ Lcd_Cmd(_LCD_CLEAR);
+Lcd_COut(1,1," ALERT!!! ");
+Lcd_COut(2,1,"ANIMALS DETECTED") ; buzz=1 ;
+Delay_ms(3000);
+if(set==0)
+{
+set=1;
+sendsms(alert);
+Delay_ms(1000);
+buzz=0 ;
+}
+}
+else
+{
+Lcd_COut(1,1," SMART CROP ");
+Lcd_COut(2,1," PROTECTION ");
+Delay_ms(600);
+set=0;
+}
+Delay_ms(600);
+}
+}
+void get_admin()
+{
+k=j=0;
+37while(1)
+{
+if (temp[j]=='"')
+{ j++;
+while(temp[j]!='"')
+{
+admin_no[k]=temp[j];
+j++;
+k++ ;
+}
+admin_no[i]='\0';
+break;
+Ltrim(admin_no);
+Rtrim(admin_no);
+}
+j++;
+}
+}
+void wait_cal()
+{
+while(1){
+while(UART1_Data_Ready()==0);
+while(UART1_Data_Ready()==1)
+{
+k = UART1_Read();
+if(index == 35)
+{
+UART1_Write_CText("ATH\r\n");
+rev = 1;
+break;
+}
+if('\n'!=k && '\r'!=k)
+{
+temp[index]=k;
+index++;
+}
+}
+if(rev==1)
+{
+rev = 0;
+temp[index] = 0;
+index = 0;
+get_admin();
+Lcd_Cmd(_LCD_CLEAR);
+38Lcd_Out(1,1,"Receiving call..");
+Lcd_Out(2,1,admin_no);
+Delay_ms(2000);break;
+}
+}
+}
+void sendsms(char *a)
+{
+char d=0;
+Lcd_Cmd(_LCD_CLEAR);
+Lcd_COut(1,1,"SENDING SMS TO");
+Lcd_Out(2,1,admin_no);
+UART1_Write_Text(msg);
+if(admin_no[0]!='+')
+{ UART1_Write('+'); }
+UART1_Write_Text(admin_no);
+UART1_Write('\"');
+UART1_Write(0x0D);
+Delay_ms(100);
+for ( ; d = *a ; ++a )
+{UART1_Write(d) ; }
+// UART1_Write_Text(a) ;
+UART1_Write(0x1a); Delay_ms(500);
+UART1_Write(0x0D);
+Lcd_Cmd(_LCD_CLEAR);
+Lcd_COut(1,1,"MESSAGE SENT");
+Delay_ms(5000);
+}
+/*
+void main()
+{
+ADCON1 = 0x80;
+TRISE = 0xff;
+TRISB.F0 = 0;
+buz=0;
+UART1_Init(9600);
+Lcd_Init(); // Initialize LCD
+39Lcd_Cmd(_LCD_CLEAR); // Clear display
+Lcd_Cmd(_LCD_CURSOR_OFF); // Cursor off
+Delay_ms(1000);
+init_gsm();
+Lcd_Cmd(_LCD_CLEAR);
+Lcd_COut(1,1,"WAITING FOR CALL ");
+wait_cal();
+sendsms(config);
+Lcd_COut(1,1,"COMBUSTIBLE GAS ");
+Lcd_COut(2,1,"Detection System ");
+Delay_ms(2000);
+while(1)
+{
+Lcd_Cmd(_LCD_CLEAR);
+adc = ADC_Read(6);
+temp1[0] = adc/1000 +48 ; // Add 48 to get the ASCII character value
+temp1[1] = (adc/100)%10 +48;
+temp1[2] = (adc/10)%10 +48;
+temp1[3] = adc%10 +48;
+if(adc>200)
+{ Lcd_Cmd(_LCD_CLEAR);
+Lcd_COut(1,1," ALERT!!! ");
+Lcd_COut(2,1,"COMBUSTIBLE GAS Detected ") ; buz=1 ;
+Delay_ms(4000);
+if(set==0)
+{
+set=1;
+sendsms(alert);
+Delay_ms(1000);
+buz=0 ;
+}
+}
+else
+{
+Lcd_COut(1,1,"COMBUSTIBLE
+GAS"); Lcd_COut(2,1,"Detection
+System ");
+Delay_ms(600);
+set=0;
+}
+40Delay_ms(600);
+}
+}
+*/
